@@ -3,7 +3,8 @@ from google import genai
 from PIL import Image
 
 # Setup your Gemini Client
-client = genai.Client(api_key="AQ..Ab8RN6J8Y34rB4Ey2Ccq0tn9WCbBJqbtP0tS2hNi7wqYS6ajaQ")
+client = client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+
 
 # Set up the page title and layout
 st.set_page_config(page_title="EDUlens - AI Assistant", page_icon="🎓")
