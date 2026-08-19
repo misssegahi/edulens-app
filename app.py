@@ -2,28 +2,24 @@ import streamlit as st
 from google import genai
 from PIL import Image
 
-# Setup your Gemini Client
-client = client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+# Initialize the Gemini Client securely through Streamlit Secrets
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
-
-# Set up the page title and layout
+# Configure layout and browser tab details
 st.set_page_config(page_title="EDUlens - AI Assistant", page_icon="🎓")
 
-# Sidebar navigation for your 5 Features
+# Sidebar navigation containing exactly your 4 functional features
 st.sidebar.title("🎒 EDUlens Navigation")
 feature = st.sidebar.radio(
     "Choose a Feature:",
-    ["🤖 General Chat & Image Upload", "📝 Text Summarizer", "✍️ Grammar Fixer", "💻 Code Assistant", "🧠 Quiz Generator"]
+    ["🤖 General Chat & Image Upload", "📝 Text Summarizer", "✍️ Grammar Fixer", "🧠 Quiz Generator"]
 )
 
-# Feature 1: General Chat WITH Image Upload
+# Feature 1: General Chat WITH Image Upload (Multimodal Support)
 if feature == "🤖 General Chat & Image Upload":
     st.title("🎓 EDUlens - Chat & Vision")
-    
-    # 📸 IMAGE UPLOAD BUTTON ADDED HERE
     uploaded_file = st.file_uploader("Upload an image for EDUlens to see (Optional):", type=["png", "jpg", "jpeg"])
     
-    # Show the image if uploaded
     img = None
     if uploaded_file is not None:
         img = Image.open(uploaded_file)
@@ -34,11 +30,10 @@ if feature == "🤖 General Chat & Image Upload":
     if st.button("Ask EDUlens"):
         if user_input or img:
             with st.spinner("Analyzing..."):
-                # If there's an image, send both image and text
+                # Pass both image object and text string seamlessly if an image exists
                 contents = [img, user_input] if img else user_input
-                
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash', 
+                    model='gemini-1.5-flash', 
                     contents=contents
                 )
                 st.success(response.text)
@@ -53,8 +48,10 @@ elif feature == "📝 Text Summarizer":
         if user_input:
             with st.spinner("Summarizing..."):
                 prompt = f"Summarize the following text clearly and concisely:\n\n{user_input}"
-                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
                 st.info(response.text)
+        else:
+            st.warning("Please enter text to summarize.")
 
 # Feature 3: Grammar Fixer
 elif feature == "✍️ Grammar Fixer":
@@ -64,21 +61,12 @@ elif feature == "✍️ Grammar Fixer":
         if user_input:
             with st.spinner("Correcting..."):
                 prompt = f"Correct any grammar or spelling mistakes in this text and provide the polished version:\n\n{user_input}"
-                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
                 st.success(response.text)
+        else:
+            st.warning("Please enter text to fix.")
 
-# Feature 4: Code Assistant
-elif feature == "💻 Code Assistant":
-    st.title("💻 EDUlens - Code Assistant")
-    user_input = st.text_input("What code do you need help with?", placeholder="Write a Python function to sort a list.")
-    if st.button("Generate Code"):
-        if user_input:
-            with st.spinner("Coding..."):
-                prompt = f"Act as an expert software developer. Help with this programming request:\n\n{user_input}"
-                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-                st.code(response.text)
-
-# Feature 5: Quiz Generator
+# Feature 4: Quiz Generator
 elif feature == "🧠 Quiz Generator":
     st.title("🧠 EDUlens - Quiz Generator")
     user_input = st.text_input("Enter a subject topic:", placeholder="Photosynthesis")
@@ -86,7 +74,10 @@ elif feature == "🧠 Quiz Generator":
         if user_input:
             with st.spinner("Creating Questions..."):
                 prompt = f"Create a short 3-question multiple-choice quiz about {user_input} with answers at the end."
-                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
                 st.write(response.text)
+        else:
+            st.warning("Please enter a subject topic first.")
+
 
 
