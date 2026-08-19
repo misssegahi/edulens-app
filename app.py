@@ -38,7 +38,7 @@ if feature == "🤖 General Chat & Image Upload":
                 contents = [img, user_input] if img else user_input
                 
                 response = client.models.generate_content(
-                    model='gemini-3.6-flash', 
+                    model='gemini-2.5-flash', 
                     contents=contents
                 )
                 st.success(response.text)
@@ -53,7 +53,7 @@ elif feature == "📝 Text Summarizer":
         if user_input:
             with st.spinner("Summarizing..."):
                 prompt = f"Summarize the following text clearly and concisely:\n\n{user_input}"
-                response = client.models.generate_content(model='gemini-3.6-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                 st.info(response.text)
 
 # Feature 3: Grammar Fixer
@@ -64,7 +64,7 @@ elif feature == "✍️ Grammar Fixer":
         if user_input:
             with st.spinner("Correcting..."):
                 prompt = f"Correct any grammar or spelling mistakes in this text and provide the polished version:\n\n{user_input}"
-                response = client.models.generate_content(model='gemini-3.6-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                 st.success(response.text)
 
 # Feature 4: Code Assistant
@@ -75,7 +75,7 @@ elif feature == "💻 Code Assistant":
         if user_input:
             with st.spinner("Coding..."):
                 prompt = f"Act as an expert software developer. Help with this programming request:\n\n{user_input}"
-                response = client.models.generate_content(model='gemini-3.6-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                 st.code(response.text)
 
 # Feature 5: Quiz Generator
@@ -86,7 +86,7 @@ elif feature == "🧠 Quiz Generator":
         if user_input:
             with st.spinner("Creating Questions..."):
                 prompt = f"Create a short 3-question multiple-choice quiz about {user_input} with answers at the end."
-                response = client.models.generate_content(model='gemini-3.6-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                 st.write(response.text)
 
 
