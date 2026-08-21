@@ -1,95 +1,67 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai
 from PIL import Image
+import os
 
-# Initialize the layout and tab header first
-st.set_page_config(page_title="EDUlens - AI Assistant", page_icon="🎓")
+# Configure the AI model (Replace with your actual API key or use environment variables)
+# get a free key from Google AI Studio
+API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY")
+genai.configure(api_key=API_KEY)
 
-# Initialize the Gemini Client securely through Streamlit Secrets (Supports AQ. keys)
-try:
-    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-except Exception as e:
-    st.error("Configuration Error: Please verify your Streamlit Advanced Secrets dashboard setup!")
+# Initialize the Gemini Vision model for handling both text and images
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Sidebar navigation for your 4 target features
-st.sidebar.title("🎒 EDUlens Navigation")
-feature = st.sidebar.radio(
-    "Choose a Feature:",
-    ["🤖 General Chat & Image Upload", "📝 Text Summarizer", "✍️ Grammar Fixer", "🧠 Quiz Generator"],
-    key="edulens_nav_selection"
-)
+# Set up page configurations
+st.set_page_config(page_title="Edulens AI - Homework Assistant", page_icon="📚", layout="centered")
 
-# ----------------- FEATURE 1: CHAT & VISION -----------------
-if feature == "🤖 General Chat & Image Upload":
-    st.title("🎓 EDUlens - Chat & Vision")
-    uploaded_file = st.file_uploader("Upload an image for EDUlens to see (Optional):", type=["png", "jpg", "jpeg"], key="vision_uploader_tool")
-    
-    img = None
-    if uploaded_file is not None:
-        img = Image.open(uploaded_file)
-        st.image(img, caption="Your Uploaded Image", use_container_width=True)
+st.title("📚 Edulens AI")
+st.subheader("Your ultimate AI-powered study companion")
+st.write("Upload a photo of your homework or type a problem to get step-by-step explanations.")
 
-    user_input = st.text_input("Ask a question about your image or any educational topic:", placeholder="What is in this image?", key="vision_input_box")
-    
-    if st.button("Ask EDUlens", key="vision_action_btn"):
-        if user_input or img:
-            with st.spinner("Analyzing content..."):
-                try:
-                    contents = [img, user_input] if img else user_input
-                    response = client.models.generate_content(
-                        model='gemini-1.5-flash', 
-                        contents=contents
-                    )
-                    st.success(response.text)
-                except Exception as e:
-                    st.error(f"API Request Failed: {e}\nCheck that your API key is correctly pasted in Secrets.")
-        else:
-            st.warning("Please type a question or upload an image first!")
+# Input options: Text problem
+text_input = st.text_area("Type your homework question here:", placeholder="e.g., Solve for x: 2x + 5 = 15, or paste an essay prompt...")
 
-# ----------------- FEATURE 2: TEXT SUMMARIZER -----------------
-elif feature == "📝 Text Summarizer":
-    st.title("📝 EDUlens - Text Summarizer")
-    user_input = st.text_area("Paste your long text here:", placeholder="Paste text to condense...", key="summarizer_input_area")
-    if st.button("Summarize Text", key="summarizer_action_btn"):
-        if user_input:
-            with st.spinner("Condensing..."):
-                try:
-                    prompt = f"Summarize the following text clearly and concisely:\n\n{user_input}"
-                    response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
-                    st.info(response.text)
-                except Exception as e:
-                    st.error(f"Execution Error: {e}")
-        else:
-            st.warning("Please enter text to summarize.")
+# Input options: Image upload (OCR & Visual Problem Solving)
+uploaded_file = st.file_uploader("Or upload a photo of your assignment:", type=["jpg", "jpeg", "png"])
 
-# ----------------- FEATURE 3: GRAMMAR FIXER -----------------
-elif feature == "✍️ Grammar Fixer":
-    st.title("✍️ EDUlens - Grammar Fixer")
-    user_input = st.text_area("Paste your text to check:", placeholder="i is writing code now...", key="grammar_input_area")
-    if st.button("Fix Grammar & Spelling", key="grammar_action_btn"):
-        if user_input:
-            with st.spinner("Polishing writing..."):
-                try:
-                    prompt = f"Correct any grammar or spelling mistakes in this text and provide the polished version:\n\n{user_input}"
-                    response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
-                    st.success(response.text)
-                except Exception as e:
-                    st.error(f"Execution Error: {e}")
-        else:
-            st.warning("Please enter text to fix.")
+# Preview uploaded image
+image = None
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Homework Image", use_column_width=True)
 
-# ----------------- FEATURE 4: QUIZ GENERATOR -----------------
-elif feature == "🧠 Quiz Generator":
-    st.title("🧠 EDUlens - Quiz Generator")
-    user_input = st.text_input("Enter a subject topic:", placeholder="Photosynthesis", key="quiz_topic_input")
-    if st.button("Generate Custom Quiz", key="quiz_action_btn"):
-        if user_input:
-            with st.spinner("Formulating quiz questions..."):
-                try:
-                    prompt = f"Create a short 3-question multiple-choice quiz about {user_input} with answers at the end."
-                    response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
-                    st.write(response.text)
-                except Exception as e:
-                    st.error(f"Execution Error: {e}")
-        else:
-            st.warning("Please enter a subject topic first.")
+# System prompt to enforce educational step-by-step guidance
+system_prompt = """
+You are an expert AI tutor. Your goal is to help students learn by breaking down 
+complex academic questions (math, science, grammar, etc.) into clear, step-by-step explanations.
+Do not just provide a flat answer; explain the 'why' and 'how' behind the concept so the student can understand it.
+"""
+
+# Submit button logic
+if st.button("Solve & Explain"):
+    if not text_input and image is None:
+        st.warning("Please provide a question by either typing text or uploading an image.")
+    else:
+        with st.spinner("Analyzing your homework..."):
+            try:
+                # Combine inputs based on what the user provided
+                content_payload = [system_prompt]
+                
+                if text_input:
+                    content_payload.append(f"Question: {text_input}")
+                if image:
+                    content_payload.append(image)
+                    content_payload.append("Please perform OCR to read this image and solve the problem inside it.")
+
+                # Generate the solution
+                response = model.generate_content(content_payload)
+                
+                # Display output
+                st.success("Analysis Complete!")
+                st.markdown("### 📝 Step-by-Step Solution:")
+                st.write(response.text)
+                
+            except Exception as e:
+                st.error(f"An error occurred while generating the solution: {e}")
+
+st.info("Tip: Double-check the steps to master the core topic before your next exam!")
